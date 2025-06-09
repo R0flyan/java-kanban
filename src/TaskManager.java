@@ -9,10 +9,6 @@ public class TaskManager {
     private final Map<Integer, Epic> epics = new HashMap<>();
     private final Map<Integer, Subtask> subtasks = new HashMap<>();
 
-    private int createId() {
-        return newId++;
-    }
-
     public List<Task> getAllTasks() {
         return new ArrayList<>(tasks.values());
     }
@@ -57,36 +53,32 @@ public class TaskManager {
 
     public Task createTask(Task task) {
         if (task == null) return null;
-
         int id = createId();
-        Task newTask = new Task(id, task.getName(), task.getDescription(), task.getStatus());
-        tasks.put(id, newTask);
-        return newTask;
+        task.setId(id);
+        tasks.put(task.getId(), task);
+        return tasks.get(id);
     }
 
     public Epic createEpic(Epic epic) {
         if (epic == null) return null;
-
         int id = createId();
-        Epic newEpic = new Epic(id, epic.getName(), epic.getDescription());
-        epics.put(id, newEpic);
-        return newEpic;
+        epic.setId(id);
+        epics.put(epic.getId(), epic);
+        return epics.get(id);
     }
 
     public Subtask createSubtask(Subtask subtask) {
         if (subtask == null) return null;
-
         int id = createId();
-        Subtask newSubtask = new Subtask(id, subtask.getName(), subtask.getDescription(),
-                subtask.getStatus(), subtask.getEpicId());
+        subtask.setId(id);
 
         Epic epic = epics.get(subtask.getEpicId());
         if (epic == null) return null;
 
-        subtasks.put(id, newSubtask);
+        subtasks.put(subtask.getId(), subtask);
         epic.addSubtaskId(id);
         updateEpicStatus(epic.getId());
-        return newSubtask;
+        return subtasks.get(id);
     }
 
     public void updateTask(Task task) {
@@ -203,5 +195,9 @@ public class TaskManager {
         } else {
             epic.setStatus(TaskStatus.IN_PROGRESS);
         }
+    }
+
+    private int createId() {
+        return newId++;
     }
 }

@@ -36,6 +36,7 @@ public class Main {
         System.out.println(epic1.getStatus());
 
         manager.deleteTask(1);
+        task2.setStatus(TaskStatus.DONE);
         System.out.println(manager.getAllTasks());
 
     }
