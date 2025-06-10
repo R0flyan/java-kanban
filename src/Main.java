@@ -43,5 +43,9 @@ public class Main {
         manager.getSubtask(4);
         System.out.println(manager.getHistory());
 
+        Task updatedTask2 = new Task(2, "taskTwoUpdated", "Updated Description of taskTwo", TaskStatus.IN_PROGRESS);
+        manager.updateTask(updatedTask2);
+        manager.getTask(2);
+        System.out.println(manager.getHistory());
     }
 }
