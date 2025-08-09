@@ -4,6 +4,30 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class InMemoryHistoryManager implements HistoryManager {
+    @Override
+    public void add(Task task) {
+        if (task == null) {
+            return;
+        }
+        Node existNode = historyMap.get(task.getId());
+        if (existNode != null) {
+            removeNode(existNode);
+        }
+        linkLast(task); //добавляем узел с задачей
+        historyMap.put(task.getId(), tail);   // обновляем и указываем на новый узел
+    }
+
+    @Override
+    public void remove(int id) {
+        Node node = historyMap.remove(id);
+        removeNode(node);
+    }
+
+    @Override
+    public List<Task> getHistory() {
+        return getTasks(); //возвращаем список задач
+    }
+
     private final Map<Integer, Node> historyMap = new HashMap<>();
     private Node head;
     private Node tail;
@@ -51,29 +75,5 @@ public class InMemoryHistoryManager implements HistoryManager {
         } else {
             tail = node.previous;
         }
-    }
-
-    @Override
-    public void add(Task task) {
-        if (task == null) {
-            return;
-        }
-        Node existNode = historyMap.get(task.getId());
-        if (existNode != null) {
-            removeNode(existNode);
-        }
-        linkLast(task); //добавляем узел с задачей
-        historyMap.put(task.getId(), tail);   // обновляем и указываем на новый узел
-    }
-
-    @Override
-    public void remove(int id) {
-        Node node = historyMap.remove(id);
-        removeNode(node);
-    }
-
-    @Override
-    public List<Task> getHistory() {
-        return getTasks(); //возвращаем список задач
     }
 }
