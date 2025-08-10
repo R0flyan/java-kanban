@@ -1,31 +1,42 @@
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
+import java.util.List;
 
 class InMemoryHistoryManagerTest {
+    TaskManager manager = Managers.getDefault();
+    HistoryManager historyManager = Managers.getDefaultHistory();
+
     @Test
-    void historyManagerShouldSaveOldAndNewVersionsOfSameTask() {
-        TaskManager manager = Managers.getDefault();
-        HistoryManager historyManager = Managers.getDefaultHistory();
+    void shouldNotStoreDuplicatesInHistory() {
 
-        Task originalTask = new Task(1, "OriginalName", "OriginalDesc", TaskStatus.NEW);
-        manager.createTask(originalTask);
-        Task taskInManager = manager.getTask(1);
-        Task firstVersion = manager.getHistory().get(0);
+        Task task1 = new Task(1, "Task1", "Task1-desc", TaskStatus.NEW);
+        Task task2 = new Task(2, "Task2", "Task2-desc", TaskStatus.NEW);
+        historyManager.add(task1);
+        historyManager.add(task2);
+        historyManager.add(task1);
+        List<Task> expected = List.of(task2, task1);
+        assertEquals(expected, historyManager.getHistory(), "В истории сохраняются дубликаты");
+    }
 
-        Task updatedTask = new Task(1, "UpdatedName", "UpdatedDesc", TaskStatus.IN_PROGRESS);
-        manager.updateTask(updatedTask);
-        manager.getTask(1);
+    @Test
+    void shouldRemoveTaskFromHistory() {
+        Task task = new Task(1, "Task", "desc", TaskStatus.NEW);
+        historyManager.add(task);
+        historyManager.remove(1);
+        assertTrue(historyManager.getHistory().isEmpty(), "Задача не удаляется");
+    }
 
-        assertEquals(2, manager.getHistory().size(), "Обе версии не сохранены");
-        assertEquals("OriginalName", firstVersion.getName(), "Оригинальное имя не сохранилось");
-        assertEquals("OriginalDesc", firstVersion.getDescription(), "Оригинальное описание не сохранилось");
-        assertEquals(TaskStatus.NEW, firstVersion.getStatus(), "Оригинальный статус не сохранился");
+    @Test
+    void shouldChangeInsertionOrder() {
+        Task task1 = new Task(1, "Task 1", "desc1", TaskStatus.NEW);
+        Task task2 = new Task(2, "Task 2", "desc2", TaskStatus.NEW);
 
-        Task updatedVersion = manager.getHistory().get(1);
-        assertEquals("UpdatedName", updatedVersion.getName(), "Обновленное имя не сохранилось");
-        assertEquals("UpdatedDesc", updatedVersion.getDescription(), "Обновленное описание не сохранилось");
-        assertEquals(TaskStatus.IN_PROGRESS, updatedVersion.getStatus(), "Обновленный статус не сохранился");
+        historyManager.add(task1);
+        historyManager.add(task2);
+        historyManager.add(task1); // Должен переместиться в конец
 
-        assertEquals(firstVersion.getId(), updatedVersion.getId(), "Должны быть версии одной задачи");
+        assertEquals(2, historyManager.getHistory().size(), "Добавляются лишнии задачи");
+        assertEquals(task2, historyManager.getHistory().get(0));
+        assertEquals(task1, historyManager.getHistory().get(1));
     }
 }
