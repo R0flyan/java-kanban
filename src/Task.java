@@ -3,12 +3,14 @@ public class Task {
     private String name;
     private String description;
     private TaskStatus status;
+    protected TaskType type;
 
     public Task(int id, String name, String description, TaskStatus status) {
         this.id = id;
         this.name = name;
         this.description = description;
         this.status = status;
+        this.type = TaskType.TASK;
     }
 
     public int getId() {
@@ -41,6 +43,10 @@ public class Task {
 
     public void setStatus(TaskStatus status) {
         this.status = status;
+    }
+
+    public TaskType getType() {
+        return type;
     }
 
     @Override
