@@ -1,6 +1,9 @@
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.util.List;
 
 public class FileBackedTaskManager extends InMemoryTaskManager {
     private static CSVFormatter formatter;
@@ -45,6 +48,11 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
                 if (task instanceof Task && !(task instanceof Epic) && !(task instanceof Subtask)) {
                     manager.tasks.put(task.getId(), task);
                 }
+            }
+
+            for (Epic epic : manager.epics.values()) {
+                List<Subtask> epicSubtasks = manager.getEpicSubtasks(epic.getId());
+                epic.calculateTimes(epicSubtasks);
             }
 
             manager.newId = manager.getMaxId() + 1;
@@ -117,7 +125,7 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
     // Метод сохранения состояния в файл
     private void save() {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
-            writer.write("id,type,name,status,description,epic");
+            writer.write("id,type,name,status,description,epic,duration,startTime,endTime");
             writer.newLine();
             for (Task task : getAllTasks()) {
                 writer.write(formatter.toString(task));
