@@ -15,6 +15,11 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
         this.formatter = new CSVFormatter();
     }
 
+    @Override
+    public List<Task> getPrioritizedTasks() {
+        return super.getPrioritizedTasks();
+    }
+
     // Загрузки из файла
     public static FileBackedTaskManager loadFromFile(File file) {
         FileBackedTaskManager manager = new FileBackedTaskManager(file, Managers.getDefaultHistory());
@@ -59,6 +64,14 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
 
         } catch (IOException e) {
             throw new ManagerSaveException("Ошибка при загрузке из файла", e);
+        }
+
+        for (Task task : manager.tasks.values()) {
+            manager.addToPriority(task);
+        }
+
+        for (Subtask subtask : manager.subtasks.values()) {
+            manager.addToPriority(subtask);
         }
 
         return manager;

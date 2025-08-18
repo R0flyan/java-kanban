@@ -5,15 +5,21 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.Duration;
 
-class FileBackedTaskManagerTest {
+class FileBackedTaskManagerTest extends TaskManagerTest<FileBackedTaskManager> {
+    private File tempFile;
+
+    @Override
+    protected FileBackedTaskManager createTaskManager() throws IOException {
+        tempFile = File.createTempFile("tasks", ".csv");
+        tempFile.deleteOnExit();
+        return new FileBackedTaskManager(tempFile, Managers.getDefaultHistory());
+    }
+
     @Test
     void shouldSaveAndLoadFromFile() throws IOException {
-        File tempFile = File.createTempFile("tasks", ".csv");
-        tempFile.deleteOnExit();
-
-        FileBackedTaskManager manager = new FileBackedTaskManager(tempFile, new InMemoryHistoryManager());
         Task task1 = new Task(1, "Test1", "Desc1", TaskStatus.NEW);
         Task task2 = new Task(2, "Test2", "Desc2", TaskStatus.NEW);
+        FileBackedTaskManager manager = createTaskManager();
         manager.createTask(task1);
         manager.createTask(task2);
 
@@ -24,10 +30,8 @@ class FileBackedTaskManagerTest {
 
     @Test
     void shouldUpdateIdGeneratorAfterLoading() throws IOException {
-        File tempFile = File.createTempFile("tasks", ".csv");
-        tempFile.deleteOnExit();
+        FileBackedTaskManager manager = createTaskManager();
 
-        FileBackedTaskManager manager = new FileBackedTaskManager(tempFile, new InMemoryHistoryManager());
         Task task1 = new Task(1, "Test1", "Desc1", TaskStatus.NEW);
         Task task2 = new Task(2, "Test2", "Desc2", TaskStatus.NEW);
         manager.createTask(task1);
@@ -41,9 +45,8 @@ class FileBackedTaskManagerTest {
 
     @Test
     void shouldSaveAndLoadTaskWithTimeFields() throws IOException {
-        File tempFile = File.createTempFile("tasks", ".csv");
-        tempFile.deleteOnExit();
-        FileBackedTaskManager manager = new FileBackedTaskManager(tempFile, new InMemoryHistoryManager());
+        FileBackedTaskManager manager = createTaskManager();
+
         LocalDateTime startTime = LocalDateTime.now();
         Duration duration = Duration.ofHours(2);
         Task task = new Task(1, "Test", "Desc", TaskStatus.NEW, duration, startTime);
