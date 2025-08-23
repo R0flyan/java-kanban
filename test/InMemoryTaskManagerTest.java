@@ -1,7 +1,17 @@
 import org.junit.jupiter.api.Test;
+
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.util.List;
+
 import static org.junit.jupiter.api.Assertions.*;
 
-class InMemoryTaskManagerTest {
+class InMemoryTaskManagerTest extends TaskManagerTest<InMemoryTaskManager> {
+    @Override
+    protected InMemoryTaskManager createTaskManager() {
+        return new InMemoryTaskManager(Managers.getDefaultHistory());
+    }
+
     TaskManager manager = Managers.getDefault();
     @Test
     void managerShouldCreateAndFindByIdDifferentTaskTypes() {
@@ -86,5 +96,20 @@ class InMemoryTaskManagerTest {
 
         assertNull(manager.getTask(2), "новый айди не отслеживается");
         assertNotNull(manager.getTask(1), "старый айди задачи остался");
+    }
+
+    @Test
+    void shouldCorrectlyPrioritizeTasks() {
+        Task task1 = new Task(1, "Task1", "Desc", TaskStatus.NEW, Duration.ofHours(1),
+                LocalDateTime.now().plusHours(2));
+        Task task2 = new Task(2, "Task2", "Desc", TaskStatus.NEW, Duration.ofHours(1),
+                LocalDateTime.now());
+
+        taskManager.createTask(task1);
+        taskManager.createTask(task2);
+
+        List<Task> prioritized = taskManager.getPrioritizedTasks();
+        assertEquals(task2.getId(), prioritized.get(0).getId());
+        assertEquals(task1.getId(), prioritized.get(1).getId());
     }
 }

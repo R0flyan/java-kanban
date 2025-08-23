@@ -1,6 +1,7 @@
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.util.List;
 
 public class FileBackedTaskManager extends InMemoryTaskManager {
     private static CSVFormatter formatter;
@@ -10,6 +11,11 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
         super(historyManager);
         this.file = file;
         this.formatter = new CSVFormatter();
+    }
+
+    @Override
+    public List<Task> getPrioritizedTasks() {
+        return super.getPrioritizedTasks();
     }
 
     // Загрузки из файла
@@ -47,10 +53,23 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
                 }
             }
 
+            for (Epic epic : manager.epics.values()) {
+                List<Subtask> epicSubtasks = manager.getEpicSubtasks(epic.getId());
+                epic.calculateTimes(epicSubtasks);
+            }
+
             manager.newId = manager.getMaxId() + 1;
 
         } catch (IOException e) {
             throw new ManagerSaveException("Ошибка при загрузке из файла", e);
+        }
+
+        for (Task task : manager.tasks.values()) {
+            manager.addToPriority(task);
+        }
+
+        for (Subtask subtask : manager.subtasks.values()) {
+            manager.addToPriority(subtask);
         }
 
         return manager;
@@ -117,7 +136,7 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
     // Метод сохранения состояния в файл
     private void save() {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
-            writer.write("id,type,name,status,description,epic");
+            writer.write("id,type,name,status,description,epic,duration,startTime,endTime");
             writer.newLine();
             for (Task task : getAllTasks()) {
                 writer.write(formatter.toString(task));
