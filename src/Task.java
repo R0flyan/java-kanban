@@ -25,6 +25,10 @@ public class Task {
         this.startTime = startTime;
     }
 
+    public Task() {
+
+    }
+
     public int getId() {
         return id;
     }
