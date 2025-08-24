@@ -12,30 +12,34 @@ public class EpicsHandler extends BaseHttpHandler implements HttpHandler {
 
     @Override
     public void handle(HttpExchange exchange) throws IOException {
-        String method = exchange.getRequestMethod();
-        String path = exchange.getRequestURI().getPath();
+        try {
+            String method = exchange.getRequestMethod();
+            String path = exchange.getRequestURI().getPath();
 
-        switch (method) {
-            case "GET":
-                handleGet(exchange, path);
-                break;
-            case "POST":
-                handlePost(exchange);
-                break;
-            case "DELETE":
-                handleDelete(exchange, path);
-                break;
+            switch (method) {
+                case "GET":
+                    handleGet(exchange, path);
+                    break;
+                case "POST":
+                    handlePost(exchange);
+                    break;
+                case "DELETE":
+                    handleDelete(exchange, path);
+                    break;
+                default:
+                    sendNotFound(exchange);
+            }
+        } catch (Exception e) {
+            handleException(exchange, e);
         }
     }
 
     private void handleGet(HttpExchange exchange, String path) throws IOException {
         if (path.equals("/epics")) {
-            // Получить все эпики
             List<Epic> epics = taskManager.getAllEpics();
             String response = GSON.toJson(epics);
             sendSuccess(exchange, response);
         } else if (path.matches("/epics/\\d+")) {
-            // Получить эпик по ID
             String[] pathParts = path.split("/");
             int id = Integer.parseInt(pathParts[2]);
             Epic epic = taskManager.getEpic(id);
@@ -47,7 +51,7 @@ public class EpicsHandler extends BaseHttpHandler implements HttpHandler {
                 sendNotFound(exchange);
             }
         } else if (path.matches("/epics/\\d+/subtasks")) {
-            // Получить подзадачи эпика по ID эпика
+            // Получение подзадачи эпика по айди эпика
             String[] pathParts = path.split("/");
             int epicId = Integer.parseInt(pathParts[2]);
             Epic epic = taskManager.getEpic(epicId);
@@ -66,15 +70,42 @@ public class EpicsHandler extends BaseHttpHandler implements HttpHandler {
 
     private void handlePost(HttpExchange exchange) throws IOException {
         String requestBody = readRequestBody(exchange);
-        Epic epic = GSON.fromJson(requestBody, Epic.class);
+        System.out.println("Received subtask JSON: " + requestBody);
 
-        if (epic.getId() == 0) {
-            Epic createdEpic = taskManager.createEpic(epic);
-            String response = GSON.toJson(createdEpic);
-            sendCreated(exchange, response);
-        } else {
-            taskManager.updateEpic(epic);
-            sendCreated(exchange, "{\"message\": \"Epic updated successfully\"}");
+        try {
+            Epic epic = GSON.fromJson(requestBody, Epic.class);
+            if (epic == null) {
+                sendNotFound(exchange);
+                return;
+            }
+
+            if (epic.getId() == 0) {
+                Epic createdEpic = taskManager.createEpic(epic);
+                if (createdEpic != null) {
+                    String response = GSON.toJson(createdEpic);
+                    sendCreated(exchange, response);
+                    System.out.println("Created epic with ID: " + createdEpic.getId());
+                } else {
+                    sendNotFound(exchange);
+                }
+            } else {
+                // Обновление
+                Epic existingEpic = taskManager.getEpic(epic.getId());
+                if (existingEpic != null) {
+                    taskManager.updateEpic(epic);
+                    sendSuccess(exchange, "{\"message\": \"Subtask updated successfully\"}");
+                    System.out.println("Updated subtask with ID: " + epic.getId());
+                } else {
+                    sendNotFound(exchange);
+                }
+            }
+        } catch (TimeConflictException e) {
+            System.out.println(e.getMessage());
+            sendHasOverlaps(exchange);
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+            e.printStackTrace();
+            handleException(exchange, e);
         }
     }
 
