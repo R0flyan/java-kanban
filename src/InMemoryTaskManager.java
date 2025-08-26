@@ -100,6 +100,9 @@ public class InMemoryTaskManager implements TaskManager {
         if (epic == null) return null;
         int id = createId();
         epic.setId(id);
+        if (epic.getSubtaskIds() == null) {
+            epic.setSubtaskIds(new ArrayList<>());
+        }
         epics.put(epic.getId(), epic);
         return epics.get(id);
     }
@@ -129,7 +132,11 @@ public class InMemoryTaskManager implements TaskManager {
         if (hasTimeOverlap(task)) {
             throw new TimeConflictException("Обновленная задача пересекается по времени с существующей");
         }
-        removeFromPriority(subtasks.get(task.getId()));
+        Task savedTask = tasks.get(task.getId());
+        removeFromPriority(savedTask);
+        savedTask.setName(task.getName());
+        savedTask.setDescription(task.getDescription());
+        savedTask.setStatus(task.getStatus());
         tasks.put(task.getId(), task);
         addToPriority(task);
     }
@@ -141,6 +148,9 @@ public class InMemoryTaskManager implements TaskManager {
         Epic savedEpic = epics.get(epic.getId());
         savedEpic.setName(epic.getName());
         savedEpic.setDescription(epic.getDescription());
+        if (epic.getSubtaskIds() == null) {
+            epic.setSubtaskIds(savedEpic.getSubtaskIds());
+        }
     }
 
     @Override
